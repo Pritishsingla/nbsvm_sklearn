@@ -1,4 +1,4 @@
-# nbsvm-skleran
+# nbsvm-sklearn
 
 A Scikit-learn wrapper for the NBSVM algorithm. To read more about the same, go [here](https://www.aclweb.org/anthology/P12-2018)
 
