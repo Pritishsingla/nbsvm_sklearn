@@ -28,7 +28,7 @@ class NBSVMClassifier(BaseEstimator, ClassifierMixin):
         self.coef_ = None
         self.intercept_ = None
         self.interpolated_coef_ = None
-        self.intepolated_intercept_ = None
+        self.interpolated_intercept_ = None
         self.probability = probability
         self.class_weight = class_weight
         self.platt_model_ = None
@@ -62,7 +62,7 @@ class NBSVMClassifier(BaseEstimator, ClassifierMixin):
         self.coef_ = svm.coef_
         self.intercept_ = svm.intercept_
         self.interpolated_coef_ = self._interpolate(svm.coef_)
-        self.interpolated_coef_ = self.interpolate(svm.intercept_)
+        self.interpolated_intercept_ = self.interpolate(svm.intercept_)
         self.model = svm
         if self.probability:
             print(y.sum(), type(y))
@@ -72,7 +72,7 @@ class NBSVMClassifier(BaseEstimator, ClassifierMixin):
     def predict(self, X):
         "Perform classification on samples in X."
         X_nb = X*self.r
-        preds = np.add(np.dot(X_nb, self.interpolated_coef_.transpose()), self.intercept_)
+        preds = np.add(np.dot(X_nb, self.interpolated_coef_.transpose()), self.intepolated_intercept_)
         preds[preds>0] = 1
         preds[preds<=0] = 0 
         return preds
@@ -80,7 +80,7 @@ class NBSVMClassifier(BaseEstimator, ClassifierMixin):
     def decision_function(self, X):
         "Evaluates the decision function for the samples in X."
         X_nb = X*self.r
-        dec_fn = np.add(np.dot(X_nb, self.interpolated_coef_.transpose()), self.intercept_)
+        dec_fn = np.add(np.dot(X_nb, self.interpolated_coef_.transpose()),  self.intepolated_intercept_)
         return dec_fn
     
     def fit_transform(self, X, y):
@@ -101,6 +101,7 @@ class NBSVMClassifier(BaseEstimator, ClassifierMixin):
             return self.platt_model_.predict(dec_fn)
         
     def _platt_scale(self, X, y):
+        # NOT WORKING WELL
         n_tot = len(y[y==0])
         p_tot = len(y[y==1])
         n_tar = 1/(n_tot + 2)
