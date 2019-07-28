@@ -72,7 +72,7 @@ class NBSVMClassifier(BaseEstimator, ClassifierMixin):
     def predict(self, X):
         "Perform classification on samples in X."
         X_nb = X*self.r
-        preds = np.add(np.dot(X_nb, self.interpolated_coef_.transpose()), self.intepolated_intercept_)
+        preds = np.add(np.dot(X_nb, self.interpolated_coef_.transpose()), self.interpolated_intercept_)
         preds[preds>0] = 1
         preds[preds<=0] = 0 
         return preds
@@ -80,7 +80,7 @@ class NBSVMClassifier(BaseEstimator, ClassifierMixin):
     def decision_function(self, X):
         "Evaluates the decision function for the samples in X."
         X_nb = X*self.r
-        dec_fn = np.add(np.dot(X_nb, self.interpolated_coef_.transpose()),  self.intepolated_intercept_)
+        dec_fn = np.add(np.dot(X_nb, self.interpolated_coef_.transpose()),  self.interpolated_intercept_)
         return dec_fn
     
     def fit_transform(self, X, y):
