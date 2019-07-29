@@ -62,7 +62,7 @@ class NBSVMClassifier(BaseEstimator, ClassifierMixin):
         self.coef_ = svm.coef_
         self.intercept_ = svm.intercept_
         self.interpolated_coef_ = self._interpolate(svm.coef_)
-        self.interpolated_intercept_ = self.interpolate(svm.intercept_)
+        self.interpolated_intercept_ = self._interpolate(svm.intercept_)
         self.model = svm
         if self.probability:
             print(y.sum(), type(y))
