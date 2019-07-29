@@ -51,7 +51,7 @@ class NBSVMClassifier(BaseEstimator, ClassifierMixin):
     def _interpolate(self, weights):
         return (self.beta*weights) + (1-self.beta)*(np.mean(abs(weights)))  
     
-     def _y_to_t(self, y):
+    def _y_to_t(self, y):
         np.where(y==1, self.platt_model_['p_tar'], y)
         np.where(y==0, self.platt_model_['n_tar'], y)
         return y
