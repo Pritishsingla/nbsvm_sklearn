@@ -1,1 +1,1 @@
-from .nbsvm import NBSVMClassifier__version__ = '0.0.4'
+from .nbsvm import NBSVMClassifier__version__ = '0.0.6'

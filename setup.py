@@ -1,7 +1,7 @@
 from setuptools import setup
 setup(
     name='nbsvm-sklearn',
-    version='0.0.4',
+    version='0.0.6',
     description='sklearn wrapper for NB-SVM algorithm',
     url='https://github.com/Pritishsingla/nbsvm_sklearn.git',
     author='Pritish Singla',
