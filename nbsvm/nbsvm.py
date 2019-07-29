@@ -20,7 +20,8 @@ class NBSVMClassifier(BaseEstimator, ClassifierMixin):
                       n_samples / (n_classes * np.bincount(y))
     """
     
-    def __init__(self, C=1.0, beta=0.5, alpha=1, probability=False, class_weight='balanced'):
+    def __init__(self, C=1.0, beta=0.5, alpha=1,
+                 probability=False, class_weight='balanced'):
         self.C = C
         self.beta = beta
         self.alpha = alpha
@@ -31,7 +32,7 @@ class NBSVMClassifier(BaseEstimator, ClassifierMixin):
         self.interpolated_intercept_ = None
         self.probability = probability
         self.class_weight = class_weight
-        self.platt_model_ = None
+        self.platt_model_ = {}
         
     def _log_probs(self, X, y):
         p_sum = np.sum(X[y==1], axis=0) + self.alpha
@@ -65,8 +66,17 @@ class NBSVMClassifier(BaseEstimator, ClassifierMixin):
         self.interpolated_intercept_ = self._interpolate(svm.intercept_)
         self.model = svm
         if self.probability:
-            print(y.sum(), type(y))
-            self._platt_scale(X, y)
+            n_tot = len(y[y==0])
+            p_tot = len(y[y==1])
+            n_tar = 1/(n_tot + 2)
+            p_tar = (p_tot + 1)/(p_tot + 2)
+            self.platt_model_['n_tar'] = n_tar
+            self.platt_model_['p_tar'] = p_tar
+            model = LogisticRegressionUsingGD()
+            dec_fn = self.decision_function(X)
+            print(y.sum())
+            self.platt_model_['costs'] = model.fit(dec_fn, self._y_to_t(y))
+            self.platt_model_['model'] = model
         return self
         
     def predict(self, X):
@@ -98,37 +108,69 @@ class NBSVMClassifier(BaseEstimator, ClassifierMixin):
             raise ValueError("probabilty was set to False")
         else:
             dec_fn = self.decision_function(X)
-            return self.platt_model_.predict(dec_fn)
+            return self.platt_model_['model'].predict(dec_fn)
         
-    def _platt_scale(self, X, y):
-        # NOT WORKING WELL
-        n_tot = len(y[y==0])
-        p_tot = len(y[y==1])
-        n_tar = 1/(n_tot + 2)
-        p_tar = (p_tot + 1)/(p_tot + 2)
-        y[y==1] = p_tar
-        y[y==0] = n_tar
-        dec_fn = self.decision_function(X)
-        logit = LogitRegression()
-        logit.fit(dec_fn, y)
-        self.platt_model_ = logit
-        return self
+    def _y_to_t(self, y):
+        np.where(y==1, self.platt_model_['p_tar'], y)
+        np.where(y==0, self.platt_model_['n_tar'], y)
+        return y
     
     def score(self, X, y):
         "Returns the mean accuracy on the given test data and labels."
         preds = self.predict(X)
         return 100*round(np.mean(y==preds), 2)
       
-from sklearn.linear_model import LinearRegression
 
-#helper class
-class LogitRegression(LinearRegression):
+        
+##########################################################################
+from scipy.optimize import fmin_tnc
+
+class LogisticRegressionUsingGD:
     
-    def fit(self, X, p):
-        p = np.asarray(p)
-        y = np.log(p / (1 - p))
-        return super().fit(X, y)
+    def __init__(self):
+        self.w_ = None
+        self.b_ = None
+        
+    @staticmethod
+    def sigmoid(X):
+        return 1 / (1 + np.exp(-X))
+
+    @staticmethod
+    def net_input(X, w, b):
+        return np.dot(X, w) + b
+
+    def _probability(self, X, w, b):
+        return self.sigmoid(self.net_input(X, w, b))
+
+    def _cost_function(self, X, y, w, b):
+        m = X.shape[0]
+        prob =  self._probability(X, w, b)
+        cost = -(1 / m) * np.sum(y * np.log(prob) + (1 - y) * np.log(1 - prob))
+        return cost
+
+    def _gradient(self, X, y, w, b):
+        m = X.shape[0]
+        prob_diff =  self._probability(X, w, b) - y
+        w_grad = (1/ m) * np.dot(X.T, prob_diff)
+        b_grad = (1/ m) * np.sum(prob_diff)
+        return w_grad, b_grad
+
+    def fit(self, X, y, alpha=0.003, iters=10000):
+        y = np.array(y).reshape((len(y), 1))
+        m = X.shape[0]
+        n = X.shape[1]
+        w = np.zeros((n, 1))
+        b = np.ones((1,1))
+        costs = []
+        for i in range(iters):
+            cost =  self._cost_function(X, y, w, b)
+            costs.append(cost)
+            w_grad, b_grad = self._gradient(X, y, w, b)
+            w = w - alpha*w_grad
+            b = b - alpha*b_grad
+        self.w_ = w
+        self.b_ = b
+        return costs
 
     def predict(self, X):
-        y = super().predict(X)
-        return 1 / (np.exp(-y) + 1)
+        return self._probability(X, self.w_, self.b_)
