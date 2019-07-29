@@ -51,6 +51,11 @@ class NBSVMClassifier(BaseEstimator, ClassifierMixin):
     def _interpolate(self, weights):
         return (self.beta*weights) + (1-self.beta)*(np.mean(abs(weights)))  
     
+     def _y_to_t(self, y):
+        np.where(y==1, self.platt_model_['p_tar'], y)
+        np.where(y==0, self.platt_model_['n_tar'], y)
+        return y
+    
     def fit(self, X, y):
         "Fit the NBSVM model according to the given training data."
         X_binarized = X.copy()
@@ -74,7 +79,6 @@ class NBSVMClassifier(BaseEstimator, ClassifierMixin):
             self.platt_model_['p_tar'] = p_tar
             model = LogisticRegressionUsingGD()
             dec_fn = self.decision_function(X)
-            print(y.sum())
             self.platt_model_['costs'] = model.fit(dec_fn, self._y_to_t(y))
             self.platt_model_['model'] = model
         return self
@@ -109,11 +113,6 @@ class NBSVMClassifier(BaseEstimator, ClassifierMixin):
         else:
             dec_fn = self.decision_function(X)
             return self.platt_model_['model'].predict(dec_fn)
-        
-    def _y_to_t(self, y):
-        np.where(y==1, self.platt_model_['p_tar'], y)
-        np.where(y==0, self.platt_model_['n_tar'], y)
-        return y
     
     def score(self, X, y):
         "Returns the mean accuracy on the given test data and labels."
@@ -122,11 +121,10 @@ class NBSVMClassifier(BaseEstimator, ClassifierMixin):
       
 
         
-##########################################################################
-from scipy.optimize import fmin_tnc
+#######################################################################
 
 class LogisticRegressionUsingGD:
-    
+    "helper class for platt scaling"
     def __init__(self):
         self.w_ = None
         self.b_ = None
