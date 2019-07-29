@@ -23,8 +23,11 @@ clf.predict(X) # get binary predictions
 ```
 Full Code documentation available [here](nbsvm/nbsvm.py)
 
+## Updates
+
+Version 0.0.5: Added Platt-scaling
+
 ## Future Work
-* Add support for platt scaling  
 * Add support for multi-class classification
 * Handle sparse matrices as inputs
 * Handle ```pd.Series``` input format for labels
